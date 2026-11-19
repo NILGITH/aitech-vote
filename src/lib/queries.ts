@@ -9,7 +9,9 @@ export type EventBundle = {
   stats: Record<string, CandidateStat>;
 };
 
-export async function getPublicEvents(limit = 24): Promise<(EventRow & { candidates_count: number; total_votes: number })[]> {
+export type PublicEvent = EventRow & { candidates_count: number; total_votes: number; faces: { name: string; src: string | null }[] };
+
+export async function getPublicEvents(limit = 24): Promise<PublicEvent[]> {
   const db = await createClient();
   const { data: events } = await db
     .from("events")
@@ -21,12 +23,28 @@ export async function getPublicEvents(limit = 24): Promise<(EventRow & { candida
   if (!events?.length) return [];
   const ids = events.map((e) => e.id);
   const { data: stats } = await db.from("candidate_stats").select("event_id, total_votes").in("event_id", ids);
-  const { data: cands } = await db.from("candidates").select("event_id").in("event_id", ids).eq("is_published", true);
+  const { data: cands } = await db.from("candidates").select("event_id, display_name, photo_url").in("event_id", ids).eq("is_published", true).order("position");
   return (events as EventRow[]).map((e) => ({
     ...e,
     total_votes: (stats ?? []).filter((s) => s.event_id === e.id).reduce((a, s) => a + Number(s.total_votes), 0),
     candidates_count: (cands ?? []).filter((c) => c.event_id === e.id).length,
+    faces: (cands ?? []).filter((c) => c.event_id === e.id).slice(0, 4).map((c) => ({ name: c.display_name as string, src: (c.photo_url as string | null) ?? null })),
   }));
+}
+
+/** Chiffres globaux affichés sur l'accueil (votes, événements, candidats). */
+export async function getPlatformCounters() {
+  const db = await createClient();
+  const [{ data: stats }, { count: events }, { count: candidates }] = await Promise.all([
+    db.from("candidate_stats").select("total_votes"),
+    db.from("events").select("id", { count: "exact", head: true }).in("status", ["published", "closed"]),
+    db.from("candidates").select("id", { count: "exact", head: true }).eq("is_published", true),
+  ]);
+  return {
+    votes: (stats ?? []).reduce((a, s) => a + Number(s.total_votes), 0),
+    events: events ?? 0,
+    candidates: candidates ?? 0,
+  };
 }
 
 export async function getEventBundle(slug: string): Promise<EventBundle | null> {

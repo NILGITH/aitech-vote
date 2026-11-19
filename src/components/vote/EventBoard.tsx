@@ -85,24 +85,42 @@ export function EventBoard({ slug, eventId, categories, candidates, initial, can
         </label>
       </div>
 
-      <ul className="m-0 grid list-none gap-3 p-0" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))" }}>
-        {filtered.map((c, i) => (
-          <li key={c.id} className="av-lift av-fade-up flex items-center gap-3 rounded-2xl border border-line bg-white p-3" style={{ "--av-delay": `${Math.min(i, 10) * 0.05}s` } as React.CSSProperties}>
-            <Avatar name={c.display_name} src={c.photo_url} size={56} radius={14} />
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[15px] font-bold">{c.display_name}</div>
-              <div className="mt-0.5 text-xs text-muted">Code <strong className="text-[#1E2B45]">{c.code}</strong>{showResults && <> · {num(c.v)} votes</>}</div>
-              {showResults && (
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#EEF1F6]">
-                  <div className="av-grow h-1.5 rounded-full bg-primary transition-[width] duration-700" style={{ width: `${Math.round((c.v / max) * 100)}%` }} />
-                </div>
-              )}
-            </div>
-            <Link href={`/e/${slug}/c/${c.code}`} className={`av-btn flex h-11 flex-none items-center rounded-xl px-4 text-sm font-bold ${canVote ? "bg-primary text-white" : "border border-[#CBD3E1] text-ink"}`}>
-              {canVote ? "Voter" : "Profil"}
-            </Link>
-          </li>
-        ))}
+      <ul className="m-0 grid list-none gap-4 p-0" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 210px), 1fr))" }}>
+        {filtered.map((c, i) => {
+          const rank = showResults ? list.indexOf(c) + 1 : 0;
+          return (
+            <li key={c.id} className="group av-lift av-sheen av-tilt-in flex flex-col overflow-hidden rounded-[18px] border border-line bg-white" style={{ "--av-delay": `${Math.min(i, 12) * 0.05}s` } as React.CSSProperties}>
+              <Link href={`/e/${slug}/c/${c.code}`} className="relative block aspect-[4/3] overflow-hidden bg-[#EEF1F6]" aria-label={`Voir ${c.display_name}`}>
+                {c.photo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.photo_url} alt="" loading="lazy" className="av-zoom-img h-full w-full object-cover" />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center"><Avatar name={c.display_name} size={96} radius={999} /></span>
+                )}
+                <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[rgba(11,27,51,.55)] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                {rank > 0 && rank <= 3 && (
+                  <span className={`absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full font-heading text-sm font-extrabold shadow-lg ${rank === 1 ? "av-glow bg-accent text-ink" : "bg-white text-ink"}`}>{rank}</span>
+                )}
+                <span className="absolute bottom-3 right-3 rounded-lg bg-white/90 px-2 py-1 text-xs font-bold text-ink backdrop-blur">{c.code}</span>
+              </Link>
+              <div className="flex flex-1 flex-col gap-2 p-3.5">
+                <div className="truncate text-[15px] font-bold">{c.display_name}</div>
+                {c.bio && <p className="m-0 line-clamp-2 text-xs leading-snug text-muted">{c.bio}</p>}
+                {showResults && (
+                  <div className="mt-auto">
+                    <div className="mb-1 flex justify-between text-xs"><span className="text-muted">Votes</span><strong className="tabular-nums">{num(c.v)}</strong></div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-[#EEF1F6]">
+                      <div className="av-grow h-1.5 rounded-full bg-gradient-to-r from-primary to-accent transition-[width] duration-700" style={{ width: `${Math.round((c.v / max) * 100)}%` }} />
+                    </div>
+                  </div>
+                )}
+                <Link href={`/e/${slug}/c/${c.code}`} className={`av-btn mt-1 flex h-10 items-center justify-center rounded-xl text-sm font-bold ${canVote ? "bg-primary text-white" : "border border-[#CBD3E1] text-ink"}`}>
+                  {canVote ? "Voter" : "Voir le profil"}
+                </Link>
+              </div>
+            </li>
+          );
+        })}
       </ul>
       {!filtered.length && <p className="av-card p-6 text-center text-muted">Aucun candidat publié dans cette catégorie pour le moment.</p>}
     </div>

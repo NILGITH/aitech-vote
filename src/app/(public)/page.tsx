@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getPlans, getSettings } from "@/lib/settings";
-import { getPublicEvents } from "@/lib/queries";
+import { getPlatformCounters, getPublicEvents } from "@/lib/queries";
+import { CountUp } from "@/components/ui/CountUp";
 import { createClient } from "@/lib/supabase/server";
 import { EventCard } from "@/components/site/EventCard";
 import { Reveal } from "@/components/ui/Reveal";
@@ -13,11 +14,11 @@ import type { Candidate, Category } from "@/lib/types";
 export const revalidate = 30;
 
 const MODES = [
-  { key: "paid", n: "1", title: "Vote public payant", text: "Packs de votes payés par Mobile Money, Wave ou carte. Idéal pour les awards et concours.", ex: "Awards, Miss, talents", soft: "#E8F0FD", ink: "#1650B8" },
-  { key: "free", n: "2", title: "Vote gratuit contrôlé", text: "1 vote par jour et par numéro vérifié par code. Limites anti-robots.", ex: "Prix du public, sondages", soft: "#E6F5EF", ink: "#0E6B52" },
-  { key: "jury", n: "3", title: "Jury", text: "Chaque juré note les candidats sur une grille de critères pondérés, combinable avec le public.", ex: "Concours, startups, prix", soft: "#F1ECFC", ink: "#5B34B8" },
-  { key: "election", n: "4", title: "Élection à bulletin secret", text: "Liste électorale, un électeur = un vote, résultats scellés jusqu'à la clôture.", ex: "Associations, ordres, écoles", soft: "#FDF3DC", ink: "#8A5A00" },
-  { key: "live", n: "5", title: "Vote en direct", text: "QR code projeté pendant la soirée, résultats animés sur écran géant.", ex: "Galas, conférences, finales", soft: "#FDECEC", ink: "#B42318" },
+  { key: "paid", n: "1", title: "Vote public payant", text: "Packs de votes payés par Mobile Money, Wave ou carte. Idéal pour les awards et concours.", img: "/demo/covers/hero-beauty.svg", ex: "Awards, Miss, talents", soft: "#E8F0FD", ink: "#1650B8" },
+  { key: "free", n: "2", title: "Vote gratuit contrôlé", text: "1 vote par jour et par numéro vérifié par code. Limites anti-robots.", img: "/demo/covers/hero-talent.svg", ex: "Prix du public, sondages", soft: "#E6F5EF", ink: "#0E6B52" },
+  { key: "jury", n: "3", title: "Jury", text: "Chaque juré note les candidats sur une grille de critères pondérés, combinable avec le public.", img: "/demo/covers/hero-awards.svg", ex: "Concours, startups, prix", soft: "#F1ECFC", ink: "#5B34B8" },
+  { key: "election", n: "4", title: "Élection à bulletin secret", text: "Liste électorale, un électeur = un vote, résultats scellés jusqu'à la clôture.", img: "/demo/covers/hero-election.svg", ex: "Associations, ordres, écoles", soft: "#FDF3DC", ink: "#8A5A00" },
+  { key: "live", n: "5", title: "Vote en direct", text: "QR code projeté pendant la soirée, résultats animés sur écran géant.", img: "/demo/covers/abidjan-talent-show-2026.svg", ex: "Galas, conférences, finales", soft: "#FDECEC", ink: "#B42318" },
 ];
 
 const Check = () => (
@@ -25,7 +26,8 @@ const Check = () => (
 );
 
 export default async function Home() {
-  const [settings, plans, events] = await Promise.all([getSettings(), getPlans(), getPublicEvents(12)]);
+  const [settings, plans, events, counters] = await Promise.all([getSettings(), getPlans(), getPublicEvents(12), getPlatformCounters()]);
+  const faces = events.flatMap((e) => e.faces).filter((f) => f.src).slice(0, 8);
   const sections = settings.home_sections.filter((s) => s.visible);
   const modes = MODES.filter((m) => settings.modules[m.key] !== false);
 
@@ -45,6 +47,11 @@ export default async function Home() {
   const blocks: Record<string, React.ReactNode> = {
     hero: (
       <section key="hero" className="relative overflow-hidden bg-ink text-white">
+        {featured?.cover_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={featured.cover_url} alt="" aria-hidden="true" className="av-kenburns absolute inset-0 h-full w-full object-cover opacity-25" />
+        )}
+        <span aria-hidden="true" className="absolute inset-0" style={{ background: "linear-gradient(110deg, var(--av-ink) 35%, color-mix(in srgb, var(--av-ink) 70%, transparent))" }} />
         <div aria-hidden="true" className="av-float absolute -right-32 -top-44 h-[520px] w-[520px] rounded-full" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--av-primary) 45%, transparent), transparent 70%)" }} />
         <div aria-hidden="true" className="av-float absolute -bottom-40 -left-20 h-[360px] w-[360px] rounded-full" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--av-accent) 22%, transparent), transparent 70%)", animationDuration: "11s" }} />
         <div className="relative mx-auto flex max-w-[1240px] flex-wrap items-center gap-12 px-5 py-[clamp(40px,7vw,72px)]">
@@ -65,7 +72,15 @@ export default async function Home() {
               <span className="flex items-center gap-2"><Check />Anti-fraude en temps réel</span>
             </div>
           </div>
-          <div className="av-fade-up flex min-w-0 flex-[1_1_380px] flex-col gap-4 rounded-[20px] bg-white p-[22px] text-ink shadow-[0_30px_60px_rgba(0,0,0,.35)]" style={{ "--av-delay": ".2s" } as React.CSSProperties}>
+          <div className="relative min-w-0 flex-[1_1_380px]">
+          {faces.slice(0, 5).map((f, i) => {
+            const pos = [["-34px", "8%"], ["-26px", "62%"], ["calc(100% - 30px)", "-26px"], ["calc(100% - 22px)", "45%"], ["38%", "calc(100% - 22px)"]][i];
+            return (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={i} src={f.src!} alt="" aria-hidden="true" className="av-bob absolute z-10 hidden h-14 w-14 rounded-full border-[3px] border-white object-cover shadow-xl lg:block" style={{ left: pos[0], top: pos[1], "--av-delay": `${i * 0.7}s`, "--av-rot": `${i % 2 ? 6 : -6}deg` } as React.CSSProperties} />
+            );
+          })}
+          <div className="av-fade-up flex flex-col gap-4 rounded-[20px] bg-white p-[22px] text-ink shadow-[0_30px_60px_rgba(0,0,0,.35)]" style={{ "--av-delay": ".2s" } as React.CSSProperties}>
             {featured && feat ? (
               <>
                 <div className="flex items-center justify-between gap-3">
@@ -91,6 +106,20 @@ export default async function Home() {
               </div>
             )}
           </div>
+          </div>
+        </div>
+        <div className="relative mx-auto grid max-w-[1240px] grid-cols-2 gap-4 px-5 pb-10 md:grid-cols-4">
+          {[
+            [counters.votes, "votes exprimés"],
+            [counters.events, "événements publiés"],
+            [counters.candidates, "candidats en lice"],
+            [5, "moyens de paiement"],
+          ].map(([v, l], i) => (
+            <Reveal key={l as string} delay={i * 0.1} className="av-scale rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+              <div className="font-heading text-[clamp(24px,3.4vw,34px)] font-extrabold text-accent"><CountUp value={v as number} /></div>
+              <div className="text-sm text-[#C9D3E6]">{l}</div>
+            </Reveal>
+          ))}
         </div>
         {sections.some((s) => s.key === "feed") && featured && feat && (
           <VoteTicker eventId={featured.id} candidates={feat.cands} initial={feat.stats} fallback={[`Votes ouverts : ${featured.title}`, "Payez avec Wave, Orange Money, MTN, Moov ou carte", "Chaque vote reçoit un code de vérification"]} />
@@ -114,6 +143,22 @@ export default async function Home() {
         ) : (
           <p className="av-card p-8 text-center text-muted">Aucun événement public pour le moment.</p>
         )}
+        {events.length > 2 && (
+          <div className="relative -mx-5 mt-12 overflow-hidden" aria-label="Galerie des événements">
+            <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-bg to-transparent" />
+            <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-bg to-transparent" />
+            <div className="av-marquee flex w-max gap-4">
+              {[...events, ...events].map((e, i) => (
+                <Link key={i} href={e.modes.includes("election") ? `/election/${e.slug}` : `/e/${e.slug}`} className="group relative block h-40 w-72 flex-none overflow-hidden rounded-2xl bg-ink" tabIndex={i >= events.length ? -1 : 0}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {e.cover_url && <img src={e.cover_url} alt="" className="av-zoom-img h-full w-full object-cover" loading="lazy" />}
+                  <span className="absolute inset-0 bg-gradient-to-t from-[rgba(11,27,51,.9)] to-transparent" />
+                  <span className="absolute inset-x-3 bottom-3 text-sm font-bold text-white">{e.title}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     ),
     modes: (
@@ -124,8 +169,12 @@ export default async function Home() {
         </Reveal>
         <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 210px), 1fr))" }}>
           {modes.map((m, i) => (
-            <Reveal key={m.key} delay={i * 0.08} className="av-lift flex flex-col gap-3 rounded-[18px] border border-line bg-white p-[22px]">
-              <span className="flex h-12 w-12 items-center justify-center rounded-[14px] font-heading text-lg font-extrabold" style={{ background: m.soft, color: m.ink }}>{m.n}</span>
+            <Reveal key={m.key} delay={i * 0.08} className="group av-lift av-tilt flex flex-col gap-3 overflow-hidden rounded-[18px] border border-line bg-white p-[22px] pt-0">
+              <div className="relative -mx-[22px] mb-1 h-28 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={m.img} alt="" className="av-zoom-img h-full w-full object-cover" loading="lazy" />
+                <span className="absolute bottom-3 left-[22px] flex h-11 w-11 items-center justify-center rounded-[14px] font-heading text-lg font-extrabold shadow-lg" style={{ background: m.soft, color: m.ink }}>{m.n}</span>
+              </div>
               <h3 className="m-0 text-lg font-bold">{m.title}</h3>
               <p className="m-0 text-[15px] leading-relaxed text-[#4A5468]">{m.text}</p>
               <p className="m-0 text-[13px] font-semibold text-muted">{m.ex}</p>

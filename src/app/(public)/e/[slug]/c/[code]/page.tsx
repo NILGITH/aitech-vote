@@ -49,9 +49,11 @@ export default async function CandidatePage({ params }: { params: Promise<{ slug
     <div className="mx-auto grid max-w-[1000px] gap-8 px-5 py-8 md:grid-cols-[1fr_420px]">
       <div className="av-fade-up flex flex-col gap-5">
         <Link href={`/e/${slug}`} className="text-sm font-semibold text-primary">← {e.title}</Link>
-        <div className="flex items-center gap-4">
-          <Avatar name={cand.display_name} src={cand.photo_url} size={88} radius={22} />
-          <div>
+        <div className="flex flex-wrap items-center gap-5">
+          <span className="av-ring-spin av-scale-in rounded-[28px]">
+            <Avatar name={cand.display_name} src={cand.photo_url} size={136} radius={28} />
+          </span>
+          <div className="av-fade-up" style={{ "--av-delay": ".15s" } as React.CSSProperties}>
             <h1 className="m-0 text-[clamp(24px,4vw,32px)] font-extrabold">{cand.display_name}</h1>
             <p className="m-0 text-sm text-muted">{d.category} · Code <strong className="text-ink">{cand.code}</strong></p>
             {e.show_live_results && <p className="m-0 mt-1 text-sm font-semibold text-success">{num(d.votes)} votes</p>}

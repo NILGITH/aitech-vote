@@ -29,14 +29,19 @@ export default async function ElectionPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className="mx-auto max-w-xl px-5 py-8">
-      <section className="av-fade-up mb-6 flex flex-col gap-2 rounded-[var(--av-radius)] bg-ink p-5 text-white">
-        <span className="flex items-center gap-2 text-xs font-bold text-[#9FD8C2]">
+      <section className="av-fade-up relative mb-6 flex flex-col gap-2 overflow-hidden rounded-[var(--av-radius)] bg-ink p-5 pt-24 text-white">
+        {e.cover_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={e.cover_url} alt="" aria-hidden="true" className="av-kenburns absolute inset-0 h-full w-full object-cover" />
+        )}
+        <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[rgba(11,27,51,.96)] via-[rgba(11,27,51,.75)] to-[rgba(11,27,51,.2)]" />
+        <span className="relative flex items-center gap-2 text-xs font-bold text-[#9FD8C2]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5FD3A4" strokeWidth="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
           BULLETIN SECRET
         </span>
-        <h1 className="m-0 text-2xl font-extrabold leading-tight">{e.title}</h1>
-        {e.description && <p className="m-0 text-sm text-[#C9D3E6]">{e.description}</p>}
-        {open && e.vote_closes_at && <p className="m-0 text-sm text-[#C9D3E6]">Clôture dans <strong className="text-white"><Countdown to={e.vote_closes_at} /></strong></p>}
+        <h1 className="relative m-0 text-2xl font-extrabold leading-tight">{e.title}</h1>
+        {e.description && <p className="relative m-0 text-sm text-[#C9D3E6]">{e.description}</p>}
+        {open && e.vote_closes_at && <p className="relative m-0 text-sm text-[#C9D3E6]">Clôture dans <strong className="text-white"><Countdown to={e.vote_closes_at} /></strong></p>}
       </section>
       {open ? (
         <BallotFlow eventId={e.id} categories={cats ?? []} candidates={cands ?? []} alreadyVerified={!!session} />
